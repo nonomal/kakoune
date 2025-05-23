@@ -716,7 +716,7 @@ void paste(Context& context, NormalParams params)
 {
     const char reg = params.reg ? params.reg : '"';
     auto strings = RegisterManager::instance()[reg].get(context);
-    const bool linewise = any_of(strings, [](StringView str) {
+    const bool linewise = all_of(strings, [](StringView str) {
         return not str.empty() and str.back() == '\n';
     });
 
@@ -741,7 +741,6 @@ void paste_all(Context& context, NormalParams params)
 {
     const char reg = params.reg ? params.reg : '"';
     auto strings = RegisterManager::instance()[reg].get(context);
-    bool linewise = false;
     String all;
     Vector<ByteCount> offsets;
     for (auto& str : strings)
@@ -749,11 +748,12 @@ void paste_all(Context& context, NormalParams params)
         if (str.empty())
             continue;
 
-        if (str.back() == '\n')
-            linewise = true;
         all += str;
         offsets.push_back(all.length());
     }
+    const bool linewise = all_of(strings, [](StringView str) {
+        return not str.empty() and str.back() == '\n';
+    });
 
     if (offsets.empty())
         throw runtime_error("nothing to paste");
@@ -947,7 +947,7 @@ void extend_to_next_matches(Context& context, const Regex& regex, RegexMode mode
                  new_sels.push_back(sel);
                  merge_selections(new_sels.back(), new_sel);
              }
-             else if (new_sels.size() <= main_index)
+             else if (new_sels.size() <= main_index and main_index != 0)
                  --main_index;
          }
          if (new_sels.empty())
